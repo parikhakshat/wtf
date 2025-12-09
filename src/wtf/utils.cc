@@ -271,6 +271,16 @@ bool SanitizeCpuState(CpuState_t &CpuState) {
   }
 
   //
+  // Check if the CR3 is page aligned.
+  //
+
+  const Gpa_t Cr3(CpuState.Cr3);
+  if (Cr3.Align() != Cr3) {
+    fmt::print("@cr3 ({:x}) is not aligned.. aligning it.\n", Cr3);
+    CpuState.Cr3 = Cr3.Align().U64();
+  }
+
+  //
   // If mxcsr_mask is equal to 0 it means something is wrong (old version of
   // bdump, etc.) and will cause #GPs. In that case, let's use a default
   // value that's been taken from the Linux kernel (src:
@@ -527,4 +537,38 @@ ReadIDTEntryHandler(const Backend_t &Backend, const CpuState_t &CpuState,
   }
 
   return Entry.Handler();
+}
+
+
+[[nodiscard]] std::vector<std::string> SplitString(std::string source, const char* delimiter) {
+
+  std::string src(source);
+  std::vector<std::string> words;
+  
+  if (src.size() == 0)
+      return words;
+
+  size_t pos = 0;
+  while ((pos = src.find(delimiter)) != std::string::npos) {
+    words.push_back(src.substr(0, pos));
+    src.erase(0, pos + strlen(delimiter));
+  }
+  words.push_back(src);
+  return words;
+}
+
+std::string toLowerString(const std::string& S) {
+	std::string Out;
+	for (const char16_t& C : S) {
+		Out.push_back(char(tolower(C)));
+	}
+	return Out;
+}
+
+std::u16string toLowerWString(const std::u16string& S) {
+	std::u16string Out;
+	for (const char16_t& C : S) {
+		Out.push_back(char(tolower(C)));
+	}
+	return Out;
 }

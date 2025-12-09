@@ -15,17 +15,26 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/libs/BLAKE3/c)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/libs/CLI11/include)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/libs/fmt/include)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/libs/yas/include)
+include_directories(${CMAKE_CURRENT_LIST_DIR}/libs/radamsa)
+
 
 file(
     GLOB_RECURSE
     wtf_srcfiles
     wtf/*.cc
+    wtf/*.cpp
 )
 
 file(
     GLOB_RECURSE
     libfuzzer_srcfiles
     ${CMAKE_CURRENT_LIST_DIR}/libs/libfuzzer/*.cpp
+)
+
+file(
+    GLOB_RECURSE
+    libradamsa_srcfiles
+    ${CMAKE_CURRENT_LIST_DIR}/libs/radamsa/*.cpp
 )
 
 set(
@@ -39,6 +48,7 @@ add_executable(
     wtf
     ${wtf_srcfiles}
     ${libfuzzer_srcfiles}
+    ${libradamsa_srcfiles}
     ${blake3_srcfiles}
 )
 
@@ -135,6 +145,10 @@ target_precompile_headers(
     PRIVATE
     wtf/pch.h
 )
+
+target_include_directories(wtf PRIVATE ${CMAKE_CURRENT_LIST_DIR}/wtf)
+target_compile_options(wtf PRIVATE "$<$<CONFIG:Release>:/Zi>")
+target_link_options(wtf PRIVATE "$<$<CONFIG:Release>:/DEBUG>")
 
 target_link_libraries(
     wtf

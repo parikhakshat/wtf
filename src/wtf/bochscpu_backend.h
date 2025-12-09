@@ -109,6 +109,14 @@ class BochscpuBackend_t : public Backend_t {
 
   bochscpu_cpu_t Cpu_ = nullptr;
 
+  struct RipTrace_t {
+
+      Gva_t StartTracingAt_ = Gva_t(0);
+
+      bool PastFirstInstruction_ = false;
+
+  }RipTrace_;
+
   struct Tenet_t {
 
     //
@@ -124,6 +132,13 @@ class BochscpuBackend_t : public Backend_t {
     //
 
     bool PastFirstInstruction_ = false;
+
+    //
+    // Start tracing at instruction
+    //
+
+    Gva_t StartTracingAt_ = Gva_t(0);
+    bool DumpFirstTenetDelta_ = false;
 
     //
     // List of memory accesses; used for Tenet traces.
@@ -164,6 +179,12 @@ class BochscpuBackend_t : public Backend_t {
   TraceType_t TraceType_ = TraceType_t::NoTrace;
 
   //
+  // Trace starting address (optional)
+  //
+
+  uint64_t StartingAddress_ = 0;
+
+  //
   // Did the testcase triggered a crash? A timeout? Or nothing?
   // This keeps track of that.
   //
@@ -176,6 +197,12 @@ class BochscpuBackend_t : public Backend_t {
   //
 
   uint64_t InitialCr3_ = 0;
+
+  //
+  // Allow context switching (@cr3 change) for some cases (e.g. tracing
+  // your target code queued at async job) 
+  //
+  bool AllowCr3Switch_ = false;
 
   //
   // Stats of the run.
@@ -240,7 +267,13 @@ public:
   //
 
   bool SetTraceFile(const fs::path &TestcaseTracePath,
-                    const TraceType_t TraceType) override;
+                    const TraceType_t TraceType,
+                    const uint64_t StartingAddress = 0) override;
+
+  //
+  // Override context switching
+  // 
+  void SetAllowContextSwitch() override;
 
   //
   // Breakpoints.
@@ -249,6 +282,10 @@ public:
   bool SetBreakpoint(const Gva_t Gva,
                      const BreakpointHandler_t Handler) override;
 
+  void RemoveBreakpoint(const Gva_t Gva) override;
+
+  //bool SetBreakpoint(const Gva_t Gva, uint32_t offset,
+  //                   const BreakpointHandler_t Handler) override;
   //
   // Virtual memory access.
   //
